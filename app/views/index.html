@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html ng-app="TraktTvStatus">
+<head>
+    <title>TraktTvStatus</title>
+    <link rel="stylesheet" type="text/css" href="../components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../components/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="../css/main.css">
+
+    <script src="../components/angular/angular.js"></script>
+    <script src="../components/angular-local-storage/angular-local-storage.js"></script>
+    <script src="../components/angular-bootstrap/ui-bootstrap.js"></script>
+    <script src="../components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+    <script src="../components/angular-ui-router/release/angular-ui-router.js"></script>
+
+    <script src="../js/index.js"></script>
+    <script src="../js/SettingsCtrl.js"></script>
+    <script src="../js/SettingsModalService.js"></script>
+    <script src="../js/SettingsService.js"></script>
+</head>
+<body>
+<div class="container" data-ng-controller="ShowListController as showListCtrl">
+    <nav class="navbar navbar-inverse navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <form class="navbar-form navbar-left">
+                <div class="form-group">
+                    <label>
+                        <button type="submit" class="btn btn-default"
+                                data-ng-click="toggleShowCompleted()">
+                            <span data-ng-show="settings.hideWatched">
+                                <i class="fa fa-eye"></i> Show watched
+                            </span>
+                            <span data-ng-show="!settings.hideWatched">
+                                <i class="fa fa-eye-slash"></i> Hide watched
+                            </span>
+                        </button>
+                    </label>
+                </div>
+            </form>
+            <form class="navbar-form navbar-right">
+                <div class="form-group">
+                    <div class="btn-toolbar" role="toolbar">
+                        <div class="btn-group">
+                            <button class="btn btn-default" data-ng-click="loadShowList()">
+                                <i class="fa fa-refresh"></i>
+                            </button>
+                            <button class="btn btn-default" data-ng-click="showSettings()">
+                                <i class="fa fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </nav>
+    <div>
+        <h1 style="text-align: center" data-ng-if="showListCtrl.loading">
+            <i class="fa fa-spinner fa-spin"></i>
+        </h1>
+
+        <div data-ng-repeat="showObject in showListCtrl.shows | showFilter:settings" data-ng-if="!showListCtrl.loading">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{ showObject.show.title }}
+                    <small> - Seasons: {{showObject.seasons.length}}</small>
+                    <div class="pull-right show-panel-menu">
+                        <span class="label"
+                              data-ng-class="{
+                                'label-warning' : showObject.progress.percentage != 100,
+                                'label-success' : showObject.progress.percentage == 100
+                         }">
+                            {{showObject.progress.percentage}}%
+                        </span>
+                        &nbsp;
+                        &nbsp;
+                        <button class="btn btn-default" data-ng-click="ignoreShow(showObject)">
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <table class="table table-bordered table-striped table-condensed">
+                    <thead>
+                    <tr>
+                        <th class="col-md-2">Season</th>
+                        <th>Progress</th>
+                        <th class="col-md-1">Watched</th>
+                        <th class="col-md-1">Total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-ng-repeat="seasonObject in showObject.seasons"
+                            ng-class="{ success : seasonObject.percentage == 100}">
+                            <td>{{seasonObject.season}}</td>
+                            <td ng-init="percentage = seasonObject.percentage">
+                                <div class="progress" style="margin-bottom: 0px">
+                                    <div class="progress-bar progress-bar-success" ng-style="{ 'width': percentage + '%' }">
+                                        <span class="sr-only">{{percentage}}% Complete</span>
+                                    </div>
+                                    <div class="progress-bar progress-bar-danger progress-bar-striped" ng-style="{ 'width': (100 - percentage) + '%' }">
+                                        <span class="sr-only">{{100 - percentage}}% to watch</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ seasonObject.completed }}</td>
+                            <td>{{ seasonObject.aired }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/ng-template" id="modal.setup.html">
+        <div class="modal-header">
+            <h3 class="modal-title">Setup</h3>
+        </div>
+        <div class="modal-body">
+            <form role="form">
+                <h3>Trakt</h3>
+                <div class="form-group">
+                    <label for="apiKey">Trakt Api Key</label>
+                <span class="trakt-state">
+                    <i ng-if="state.checking" class="fa fa-spinner fa-spin"></i>
+                    <i ng-if="!state.checking && formSettings.apiKey" class="fa fa-check-circle" style="color: green"></i>
+                    <i ng-if="!state.checking && !formSettings.apiKey" class="fa fa-exclamation-circle" style="color: red"></i>
+                </span>
+                    <input type="text" class="form-control" id="apiKey" placeholder="Api Key"
+                           ng-model="tmpSettings.apiKey">
+                </div>
+                <div class="form-group">
+                    <label for="username">Trakt Username</label>
+                <span class="trakt-state" data-ng-if="settings.apiKey">
+                    <i ng-if="state.checking" class="fa fa-spinner fa-spin"></i>
+                    <i ng-if="!state.checking && formSettings.username" class="fa fa-check-circle" style="color: green"></i>
+                    <i ng-if="!state.checking && !formSettings.username" class="fa fa-exclamation-circle" style="color: red"></i>
+                </span>
+                    <input type="text" class="form-control" id="username" placeholder="Username"
+                           data-ng-model="tmpSettings.username"
+                           data-ng-disabled="!formSettings.apiKey">
+                </div>
+
+                <h3>Presentation</h3>
+
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" ng-model="formSettings.hideWatched"> Hide watched shows
+                    </label>
+                </div>
+
+                <div data-ng-if="showIgnoredShows && formSettings.ignoredShows.length">
+                    <h3>Ignored shows</h3>
+                    <table class=table>
+                        <tr data-ng-repeat="ignoredShow in formSettings.ignoredShows" data-ng-if="hasShow(ignoredShow)">
+                            <td>{{ showName(ignoredShow)}}
+                                <a class="pull-right close"
+                                        data-ng-click="removeIgnoredShow(ignoredShow)">&times;</a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" data-ng-click="submitSettings()"
+                    data-ng-disabled="state.checking || !formSettings.username || !formSettings.apiKey">Submit</button>
+        </div>
+    </script>
+</div>
+</body>
+</html>

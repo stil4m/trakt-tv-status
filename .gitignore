@@ -1,0 +1,14 @@
+.bower-cache
+.bower-registry
+.bowertmp
+.idea
+*.iml
+dist
+tmp
+.tmp
+node_modules
+app/node_modules
+app/components
+npm-debug.log
+
+resources/node-webkit

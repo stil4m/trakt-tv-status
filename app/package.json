@@ -1,0 +1,19 @@
+{
+    "name": "trak-tv-status",
+    "main": "views/index.html",
+    "version": "1.0.0",
+    "single-instance": true,
+    "window": {
+        "title": "Trakt Tv Status",
+        "width" : 775,
+        "height" : 600,
+        "min_width": 775,
+        "min_height": 400,
+        "toolbar": false
+    },
+    "chromium-args": "--child-clean-exit",
+    "dependencies": {
+        "node-trakt": "0.0.2",
+        "sha1": "1.1.0"
+    }
+}
