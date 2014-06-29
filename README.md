@@ -15,6 +15,7 @@ Node webkit application to view the progress on your TV shows within a desktop a
 
 npm install
 bower install
+./install_node_webkit.sh
 cd app
 npm install
 
